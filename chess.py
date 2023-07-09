@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List, Literal,Tuple
 
 '''
 Assume following setting:
@@ -14,16 +14,40 @@ Assume following setting:
 7  [ Black lower rank ]
 '''
 
-AXIS_TYPE_HINT = Literal[0,1,2,3,4,5,6,7]
+AXIS = Literal[0,1,2,3,4,5,6,7]
+DIRECTION = {'w': 1, 'b': -1}
 
 class Board:
     def __init__(self):
-        self.__board = [[None for _ in range(8)] for _ in range(8)]
+        board = [[None for _ in range(8)] for _ in range(8)]
+        for side in [0, 1]:
+            upper_rank = 6 - side * 5
+            lower_rank = 7 - side * 7
+            for col in range(8):
+                board[upper_rank][col] = Pawn(upper_rank, col, self)
     
-    def get_piece_at_pos(
+        # rook
+        board[lower_rank][0] = Rook(lower_rank, 0, self)
+        board[lower_rank][7] = Rook(lower_rank, 7, self)
+
+        # knight
+        board[lower_rank][1] = Knight(lower_rank, 1, self)
+        board[lower_rank][6] = Knight(lower_rank, 6, self)
+
+        # bishop
+        board[lower_rank][2] = Knight(lower_rank, 2, self)
+        board[lower_rank][5] = Knight(lower_rank, 5, self)
+
+        # queen & king
+        board[lower_rank][3] = Queen(lower_rank, 3, self)
+        board[lower_rank][4] = King(lower_rank, 4, self)
+
+        self.__board = board
+    
+    def get_at_pos(
         self, 
-        x: AXIS_TYPE_HINT, 
-        y: AXIS_TYPE_HINT
+        x: AXIS, 
+        y: AXIS
     ) -> "Piece":
         return self.__board[x][y]
     
@@ -34,61 +58,105 @@ class Board:
 class Piece:
     def __init__(
         self, 
-        x: AXIS_TYPE_HINT, 
-        y: AXIS_TYPE_HINT, 
-        color: Literal['w', 'b'], 
-        board: "Board"
+        x: AXIS, 
+        y: AXIS,
+        board: "Board",
+        name: str
     ):
         self.__x = x
         self.__y = y
-        self.__color = color
-        self.__id = f'{color}-{x}-{y}'    
-        self.__board = board    
+        self.__color = 'b' if y > 5 else 'w'
+        self.__board = board
+        self.__name = name
 
-    def is_move_valid(
+    def get_valid_moves(self) -> List[Tuple[AXIS, AXIS]]:
+        return []
+
+    def peek(
         self, 
-        x: AXIS_TYPE_HINT, 
-        y: AXIS_TYPE_HINT
-    ) -> bool:
-        return True
-
+        x: AXIS, 
+        y: AXIS
+    ) -> "Piece":
+        return self.__board.get_at_pos(x, y)
+        
     def move_to(
         self, 
-        x: AXIS_TYPE_HINT, 
-        y: AXIS_TYPE_HINT
+        x: AXIS, 
+        y: AXIS
     ) -> bool:
-        if self.is_move_valid(x, y):
+        if (x, y) in self.get_valid_moves():
             self.__x = x
             self.__y = y
+            return True
+        return False
 
     def __str__(self):
-        return self.__id
+        return f'{name}-{color}-{x}'
 
 class Pawn(Piece):
-    def is_move_valid(
+    def __init__(
         self, 
-        x: AXIS_TYPE_HINT, 
-        y: AXIS_TYPE_HINT
-    ) -> bool:
-        if self.__color == 'w':
-            # first move from original pos. Can be 1 or 2 spaces down
-            if self.__y == 1 and x == self.__x and y - self.__y == 2:
-                return self.__board.get_piece_at_pos(x, y-1) == None
-            elif y - self.__y == 1 and abs(x - self.__x) == 1 and self.__board.get_piece_at_pos(x, y).__color != self.__color:
-                return True
-            elif y - self.__y == 1 and x == self.__x:
-                item = self.__board.get_piece_at_pos(x, y)
-                if not item or item.__color != self.__color:
-                    return True
-        elif self.__color == 'w':
-            # first move from original pos. Can be 1 or 2 spaces down
-            if self.__y == 1 and x == self.__x and y - self.__y == 2:
-                return self.__board.get_piece_at_pos(x, y-1) == None
-            elif y - self.__y == 1 and abs(x - self.__x) == 1 and self.__board.get_piece_at_pos(x, y).__color != self.__color:
-                return True
-            elif y - self.__y == 1 and x == self.__x:
-                item = self.__board.get_piece_at_pos(x, y)
-                if not item or item.__color != self.__color:
-                    return True
+        x: AXIS,
+        y: AXIS,
+        board: "Board"
+    ):
+        super.__init__(x, y, board, 'Pawn')
         
-        return False
+    def get_valid_moves(self) -> List[Tuple[AXIS, AXIS]]:
+        direction = DIRECTION[self.__color]
+        moves = []
+        
+        if not 0 <= self.y + direction <= 7:
+            return []
+            
+        is_blocked = self.peek(self.x, self,y+direction) != None
+        
+        if not is_blocked:
+            moves.append((self.x, self.y + direction))
+            if 0 <= (self.y + 2*direction) <= 7:
+                moves.append((self.x, self.y + 2*direction))
+
+        y_fwd = self.y + direction
+        front_left = self.peek(self.x-1, y_fwd) 
+        front_right = self.peek(self.x+1, y_fwd)
+        
+        if not front_left or front_left.__color != self.__color:
+            moves.append((self.x-1, y_fwd))
+        if not front_right or front_right.__color != self.__color:
+            moves.append((self.x+1, y_fwd))
+        return moves
+
+class Rook(Piece):
+    def __init__(
+        self, 
+        x: AXIS,
+        y: AXIS,
+        board: "Board"
+    ):
+        super.__init__(x, y, board, 'Rook')
+        
+    def get_valid_moves(self) -> List[Tuple[AXIS, AXIS]]:
+        moves = []
+        
+        # horizontal
+        for col in range(8):
+            if col == self.__x:
+                continue
+            obstacle = self.peek(col, self.__y)
+            if obstacle:
+                if obstacle.__color != self.__color:
+                    moves.append((col, self.__y))
+                break
+                
+        # vertical
+        for row in range(8):
+            if row == self.__y:
+                continue
+            obstacle = self.peek(self.__x, row)
+            if obstacle:
+                if obstacle.__color != self.__color:
+                    moves.append((self.__x, row))
+                break
+         return moves
+        
+            
