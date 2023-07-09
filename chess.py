@@ -15,7 +15,6 @@ Assume following setting:
 '''
 
 AXIS = Literal[0,1,2,3,4,5,6,7]
-DIRECTION = {'w': 1, 'b': -1}
 
 class Board:
     def __init__(self):
@@ -103,7 +102,7 @@ class Pawn(Piece):
         super.__init__(x, y, board, 'Pawn')
         
     def get_valid_moves(self) -> List[Tuple[AXIS, AXIS]]:
-        direction = DIRECTION[self.__color]
+        direction = 1 if self.__colour == 'w' else -1
         moves = []
         
         if not 0 <= self.y + direction <= 7:
@@ -159,4 +158,30 @@ class Rook(Piece):
                 break
          return moves
         
+class Knight(Piece):
+    def __init__(
+        self, 
+        x: AXIS,
+        y: AXIS,
+        board: "Board"
+    ):
+        super.__init__(x, y, board, 'Knight')
+        
+    def get_valid_moves(self) -> List[Tuple[AXIS, AXIS]]:
+        dy = [-1, -1, 1, 1, -2, 2, -2, 2]
+        dx = [-2, 2, -2, 2, 1, 1, -1, -1]
+        moves = []
+        
+        for i in range(len(dy)):
+            new_x = self.__x + dx[i]
+            new_y = sslf.__y + dy[i]
             
+            if 0 <= new_x <= 7 and 0 <= new_y <= 7:       
+                occupant = self.peek(new_x, new_y)
+                if occupant and occupant.__color == self.__color:
+                    continue
+                moves.append((new_x, new_y))
+         return moves
+            
+
+    
