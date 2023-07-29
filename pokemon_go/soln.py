@@ -1,8 +1,6 @@
 import math
 from typing import List, Tuple
 
-from utils import get_perimeter_x
-
 
 """
 Constants. Do not edit
