@@ -43,6 +43,80 @@ def get_perimeter_x(y: int, radius: float, center_x: int, center_y: int) -> Tupl
     return (center_x - x_minus_h, center_x + x_minus_h)
 
 
+def display_grid(height: int, width: int, pokemons: List["Pokemon"], players: List["Player"]):
+    """
+    Display a grid with Pokemons and Players in it
+
+    Parameters
+    ----------
+    height : int
+        Height of grid
+    width : int
+        Width of grid
+    pokemons : List[Pokemon]
+        List of Pokemon instances
+    players : List[Player]
+        List of Player instances
+    """
+
+    locs = {}
+    for p in pokemons:
+        locs[p.get_pos()] = p.get_symbol()
+
+    for p in players:
+        px, py = p.get_pos()
+        r = p.get_lvl()
+        locs[(px, py)] = GREEN + p.get_symbol() + ENDC
+        
+        if isinstance(p, PremiumPlayer):
+            prev_x_left = None
+            prev_x_right = None
+
+            for y in range(max(0, py-r), min(py+r+1, height)):
+                x_left, x_right = get_perimeter_x(y, r, px, py)
+                x_left = math.ceil(x_left)
+                x_right = math.floor(x_right)
+                coords_left = (x_left, y)
+                coords_right = (x_right, y)
+
+                locs[coords_left] = GREEN + locs.get(coords_left, '*') + ENDC
+                locs[coords_right] = GREEN + locs.get(coords_right, '*') + ENDC
+
+                temp_x_left, temp_x_right = prev_x_left, prev_x_right
+                prev_x_left = x_left
+                prev_x_right = x_right
+
+                if temp_x_left != None and temp_x_right != None:
+                    if x_left - temp_x_left > 1:
+                        iy = y-1
+                    elif temp_x_left - x_left > 1:
+                        iy = y
+                    else:
+                        continue
+
+                    for ixl in range(min(temp_x_left, x_left)+1, max(temp_x_left, x_left)):
+                        locs[(ixl, iy)] = GREEN + locs.get((ixl, iy), '*') + ENDC
+                    for ixr in range(min(temp_x_right, x_right)+1, max(temp_x_right, x_right)):
+                        locs[(ixr, iy)] = GREEN + locs.get((ixr, iy), '*') + ENDC
+
+        elif isinstance(p, NonPremiumPlayer):
+            for y in range(max(0, py - r), min(py + r + 1, height)):
+                coord_left = (px - r, y)
+                coord_right = (px + r, y)
+                locs[coord_left] = GREEN + locs.get(coord_left, '*') + ENDC
+                locs[coord_right] = GREEN + locs.get(coord_right, '*') + ENDC
+            for x in range(max(0, px - r), min(px + r, width)):
+                coord_top = (x, py-r)
+                coord_btm = (x, py+r)
+                locs[coord_top] = GREEN + locs.get(coord_top, '*') + ENDC
+                locs[coord_btm] = GREEN + locs.get(coord_btm, '*') + ENDC
+
+    for y in range(height):
+        for x in range(width):
+            print(f'{locs.get((x,y), ".")} ', end='')
+        print()
+
+
 class Entity:
     def __init__(self, x: int, y: int, symbol: str, is_player: bool):
         """
@@ -120,6 +194,15 @@ class Player(Entity):
 
     
     def get_lvl(self) -> int:
+        """
+        Getter method for Player's level
+        
+        Returns
+        -------
+        int 
+            Player's level
+        """
+        
         return self.__lvl
 
     
@@ -243,67 +326,6 @@ class PremiumPlayer(Player):
             if x_lower <= px <= x_upper and y_lower <= py <= y_upper:
                 available.append(p)        
         return available
-
-
-def display_grid(height: int, width: int, pokemons: List[Pokemon], players: List[Player]):
-    locs = {}
-    for p in pokemons:
-        locs[p.get_pos()] = p.get_symbol()
-
-    for p in players:
-        px, py = p.get_pos()
-        r = p.get_lvl()
-        locs[(px, py)] = GREEN + p.get_symbol() + ENDC
-        
-        if isinstance(p, PremiumPlayer):
-            prev_x_left = None
-            prev_x_right = None
-
-            for y in range(max(0, py-r), min(py+r+1, height)):
-                x_left, x_right = get_perimeter_x(y, r, px, py)
-                x_left = math.ceil(x_left)
-                x_right = math.floor(x_right)
-                coords_left = (x_left, y)
-                coords_right = (x_right, y)
-
-                locs[coords_left] = GREEN + locs.get(coords_left, '*') + ENDC
-                locs[coords_right] = GREEN + locs.get(coords_right, '*') + ENDC
-
-                temp_x_left, temp_x_right = prev_x_left, prev_x_right
-                prev_x_left = x_left
-                prev_x_right = x_right
-
-                if temp_x_left != None and temp_x_right != None:
-                    if x_left - temp_x_left > 1:
-                        iy = y-1
-                    elif temp_x_left - x_left > 1:
-                        iy = y
-                    else:
-                        continue
-
-                    for ixl in range(min(temp_x_left, x_left)+1, max(temp_x_left, x_left)):
-                        locs[(ixl, iy)] = GREEN + locs.get((ixl, iy), '*') + ENDC
-                    for ixr in range(min(temp_x_right, x_right)+1, max(temp_x_right, x_right)):
-                        locs[(ixr, iy)] = GREEN + locs.get((ixr, iy), '*') + ENDC
-
-        elif isinstance(p, NonPremiumPlayer):
-            for y in range(max(0, py - r), min(py + r + 1, height)):
-                coord_left = (px - r, y)
-                coord_right = (px + r, y)
-                locs[coord_left] = GREEN + locs.get(coord_left, '*') + ENDC
-                locs[coord_right] = GREEN + locs.get(coord_right, '*') + ENDC
-            for x in range(max(0, px - r), min(px + r, width)):
-                coord_top = (x, py-r)
-                coord_btm = (x, py+r)
-                locs[coord_top] = GREEN + locs.get(coord_top, '*') + ENDC
-                locs[coord_btm] = GREEN + locs.get(coord_btm, '*') + ENDC
-            
-
-    for y in range(height):
-        for x in range(width):
-            print(f'{locs.get((x,y), ".")} ', end='')
-        print()
-
 
 
 """

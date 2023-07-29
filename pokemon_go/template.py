@@ -200,6 +200,15 @@ class Player(Entity):
 
     
     def get_lvl(self) -> int:
+        """
+        Getter method for Player's level
+        
+        Returns
+        -------
+        int 
+            Player's level
+        """
+
         #######################
         ##   YOUR CODE HERE  ##
         #######################
