@@ -93,6 +93,15 @@ class BST:
                 break
         print(res)
 
+    def height(self):
+        def helper(node: "TreeNode"):
+            print('x', node.get_data() if node else None)
+            if not node:
+                return 0
+            return max(helper(node.get_left()), helper(node.get_right())) + 1
+        print('root', self.__root.get_data())
+        return helper(self.__root)
+
 
 """
 +---------------+
@@ -201,10 +210,10 @@ ll.insert(5)
 ll.insert(7)
 ll.insert(0)
 ll.insert(3)
-ll.insert(5)
+ll.insert(6)
 ll.insert(9)
 ll.insert(99)
-ll.display() # 0 --> 3 --> 5 --> 5 --> 7 --> 9 --> 99 --> 
+ll.display() # 0 --> 3 --> 5 --> 6 --> 7 --> 9 --> 99 --> 
 print()
 
 print("+----------+")
@@ -217,12 +226,14 @@ bst.insert(9)
 bst.insert(99)
 bst.insert(0)
 bst.insert(3)
-bst.insert(5)
-bst.display() # [5, 0, 7, None, 3, None, 9, None, 5, None, 99]
+bst.insert(6)
+bst.display() # [5, 0, 7, None, 3, 6, 9, None, None, None, None, None, 99]
+print(bst.height())
 print()
 
 print("+----------+")
 print("|  Test 3  |")
 print("+----------+")
 bst_built = ll.build_bst_from_segment(0, 7)
-bst_built.display() # [5, 3, 9, 0, 5, 7, 99]
+bst_built.display() # [6, 3, 9, 0, 5, 7, 99]
+print(bst_built.height())
